@@ -1,9 +1,12 @@
 import type { CustomerType } from "./types";
-
-const LOYALTY_PASSWORD = "admin123";
+import crypto from "node:crypto";
 
 export function loyaltyHeaders(): Record<string, string> {
-  const credentials = Buffer.from(`loyalty:${LOYALTY_PASSWORD}`);
+  const password = process.env.LOYALTY_PASSWORD;
+  if (!password) {
+    throw new Error("LOYALTY_PASSWORD environment variable is not set");
+  }
+  const credentials = Buffer.from(`loyalty:${password}`);
   return { Authorization: `Basic ${credentials.toString("base64")}` };
 }
 
@@ -11,14 +14,15 @@ export function calculatePoints(
   total: number,
   customerType: CustomerType,
 ): number {
+  const fullEuros = Math.floor(total);
   if (customerType === "vip") {
-    return Math.floor(total * 2);
+    return fullEuros * 3;
   } else if (customerType === "member") {
-    return Math.floor(total * 2);
+    return fullEuros * 2;
   }
-  return Math.floor(total);
+  return fullEuros;
 }
 
 export function generateRedeemCode(): string {
-  return Math.random().toString(36).slice(2, 10).toUpperCase();
+  return crypto.randomBytes(4).toString("hex").toUpperCase();
 }
